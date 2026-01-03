@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+    # any branches you want to run this on
+    # - main
+    # - Scripts
+    - '**' # run on all branches
+
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # Install dependencies
+    - name: Set up Python 
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.13
+
+    - name: Install dependencies
+      run: |
+        pip install pytest pandas scikit-learn
+    - name: Install GA
+      run: |
+        pip install --user .
+
+    - name: Run tests
+      run: |
+        cd GA/tests
+        pytest
+        
+    - name: Assess performance 
+      run: |
+        cd GA/tests
+        python assess.py

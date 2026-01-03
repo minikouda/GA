@@ -1,0 +1,286 @@
+---
+title: "GA: Genetic Algorithm for Variable Selection"
+author: "GA-dev Team"
+format:
+  md:
+    toc: true
+    toc-depth: 3
+jupyter: python3
+execute:
+  eval: true
+  echo: true
+  warning: false
+  cache: false
+---
+
+A robust, flexible Python library for selecting the optimal subset of features in regression and classification tasks using Genetic Algorithms (GA).
+
+This project automates feature selection, improving model performance and interpretability by identifying the most relevant predictors.
+
+## How It Works
+- Core Algorithm: Evolves binary feature masks via tournament selection; supports crossover (uniform/single/k-point) and mutation (bit-flip/swap), with elitism and optional adaptive mutation.
+- Fitness & Metrics: Cross-validated model score minus a sparsity penalty; regression uses a manual $R^2$ scorer ($1 - \mathrm{SS}_{res}/\mathrm{SS}_{tot}$), classification supports accuracy, precision, recall, log-loss, and ROC-AUC.
+- Strategies: Pluggable fitness backends including Linear/Logistic Regression, Random Forest (reg/class), SVR/SVC, and Gradient Boosting; custom strategies via callables.
+- Data & CLI: Robust loaders for CSV/Excel/TXT, Pandas DataFrames, NumPy arrays, and Python lists; a friendly CLI to run GA end-to-end.
+- Parallelism & Reproducibility: Parallel CV via `n_workers`; deterministic options include fixed CV splits and seeded runs; integrates smoothly with scikit-learn datasets/models.
+
+## Installation
+
+### Prerequisites
+- Python >= 3.10
+- Dependencies:
+  - numpy >= 1.24
+  - pandas >= 1.5
+  - scipy >= 1.8
+  - scikit-learn >= 1.2
+  - joblib >= 1.2
+  - openpyxl >= 3.0
+
+### Install from Source
+
+```bash
+git clone https://github.com/Bibi-Wangg/GA-dev.git
+cd GA-dev
+pip install --user .
+```
+
+## Usage
+
+### 1. Python API
+
+The primary entry point is the `select` function.
+
+```{python}
+#| label: python-api-basic
+#| message: false
+from GA import select
+from sklearn.datasets import load_diabetes
+
+# Load regression data
+X, y = load_diabetes(return_X_y=True)
+
+# Run GA with linear regression R^2 fitness
+result = select(
+    X,
+    y,
+    penalty=0.01,
+    n_gen=10,
+    fitness_strategy="linear_regression",
+    n_splits=3,
+    n_workers=1,
+    random_state=123,
+)
+
+print("Selected Feature Indices:", result['selected'])
+print("CV Score (R2):", round(result['R2'], 4))
+print("Penalized Fitness:", round(result['R2pen'], 4))
+```
+
+K points crossover:
+```{python}
+#| label: python-api-single-k-points-swap
+#| message: false
+
+result_sp = select(
+    X,
+    y,
+    pop_size=30,
+    n_gen=10,
+    crossover_type="single_point",
+    mutation_type="swap",
+    fitness_strategy="linear_regression",
+    n_splits=5,
+    random_state=42,
+)
+
+print("Single-Point + Swap Result Indices:", result_sp['selected'])
+print("CV Score (R2):", round(result_sp['R2'], 4))
+
+result_kp = select(
+    X,
+    y,
+    pop_size=30,
+    n_gen=10,
+    crossover_type="kpoints",
+    k_points=3,
+    adaptive_mutation=True,
+    fitness_strategy="linear_regression",
+    n_splits=5,
+    random_state=42,
+)
+
+print("3-Point + Adaptive Result Indices:", result_kp['selected'])
+print("CV Score (R2):", round(result_kp['R2'], 4))
+```
+
+### 2. Command Line Interface (CLI)
+
+Below are several runnable CLI examples illustrating different **tasks, fitness functions, and evaluation metrics**.  
+All examples are intentionally small-scale for demo, testing, or CI usage.
+
+---
+
+> Note
+> Random Forest strategies (regression/classification) can take longer due to tree ensembles and CV. For efficiency on multi-core machines, prefer `--n-workers -1` to use all cores.
+
+Basic regression run (default diabetes dataset, MSE fitness):
+
+```{python}
+#| label: cli-reg-default
+#| message: false
+%%bash
+python3 scripts/run_ga.py \
+  --pop-size 30 \
+  --n-gen 10 \
+  --n-splits 10 \
+  --n-workers 1 \
+  --random-state 42
+```
+
+Regularization
+```{python}
+#| label: cli-reg-ridge
+#| message: false
+%%bash
+python3 scripts/run_ga.py \
+  --pop-size 30 \
+  --n-gen 10 \
+  --n-splits 10 \
+  --n-workers 1 \
+  --random-state 42 \
+  --penalty 0.1
+```
+
+Classification with accuracy/recall metric (local CSV, last column = target):
+
+```{python}
+#| label: cli-class-acc
+#| message: false
+%%bash
+python3 scripts/run_ga.py \
+  --task-type classification \
+  --metric accuracy \
+  --n-gen 10 \
+  --pop-size 15 \
+  --n-splits 10 \
+  --n-workers -1 \
+  --data-path GA/data/sample_classification_data.csv \
+  --random-state 42
+```
+
+```{python}
+#| label: cli-class-recall
+#| message: false
+%%bash
+python3 scripts/run_ga.py \
+  --task-type classification \
+  --metric recall \
+  --fitness random_forest \
+  --n-gen 5 \
+  --pop-size 10 \
+  --n-splits 5 \
+  --n-workers -1 \
+  --data-path GA/data/breast_cancer.csv \
+  --random-state 42 \
+  --penalty 0.1
+```
+
+### CLI Help and Options
+
+You can see all available flags and defaults via `-h`:
+
+```{python}
+#| label: cli-help
+#| message: false
+#| eval: false 
+%%bash
+python3 scripts/run_ga.py -h
+```
+
+Common arguments:
+
+| Argument | Type/Choices | Default | Description |
+|---|---|---|---|
+| `--fitness` | string | — | Fitness strategy (e.g., `linear_regression`, `logistic_regression`, `svr`). |
+| `--penalty` | float | 0.0 | Sparsity penalty (higher selects fewer features). |
+| `--pop-size` | int | 50 | Population size. |
+| `--n-gen` | int | 20 | Number of generations. |
+| `--mutation-rate` | float | 0.01 | Probability of mutation per gene. |
+| `--crossover-rate` | float | 0.8 | Probability of crossover. |
+| `--crossover-type` | uniform/single/kpoints | uniform | Crossover operator type. |
+| `--k-points` | int | 2 | Cut points when `--crossover-type=kpoints`. |
+| `--n-splits` | int | 10 | Number of CV folds. |
+| `--vectorized` | flag | false | Enable vectorized selection operator. |
+| `--adaptive-mutation` | flag | false | Toggle adaptive per-individual mutation rates. |
+| `--low-mutation-rate` | float | — | Rate for fit individuals (requires `--adaptive-mutation`). |
+| `--high-mutation-rate` | float | — | Rate for unfit individuals (requires `--adaptive-mutation`). |
+| `--patience` | int | 10 | Early stopping patience (<=0 disables). |
+| `--n-workers` | int | 1 | CV parallelism (-1 uses all cores). |
+| `--data-path` | path | — | Path to CSV/Excel/TXT; last column is target. |
+| `--task-type` | classification/regression | — | If omitted, inferred from metric (default regression). |
+| `--metric` | classification: accuracy/precision/recall/log_loss; regression: r2/mae | — | CV scoring metric. |
+| `--random-state` | int | — | Seed for reproducible GA and model randomness. |
+
+### Vectorization Benchmark
+
+Run the benchmark comparing standard vs vectorized operators (smaller size for quick demo):
+
+```{python}
+#| label: bench-vectorized
+#| message: false
+%%bash
+python3 scripts/bench_vectorized.py \
+  --n-samples 300 \
+  --n-features 80 \
+  --pop-size 30 \
+  --n-gen 8 \
+  --n-splits 3 \
+  --random-state 123
+```
+
+## Project Structure
+
+```text
+GA-dev/
+├── GA/
+│   ├── GA.py
+│   ├── data_utils.py
+│   ├── operators.py
+│   └── fitness/
+├── scripts/
+│   ├── run_ga.py
+│   ├── bench_vectorized.py
+│   └── generate_test_data.py
+├── pyproject.toml
+├── README.md
+└── README.qmd
+```
+
+## Development
+
+### Running Tests
+
+```bash
+pytest GA/tests/
+```
+
+### Adding a New Fitness Strategy
+
+Extend `GA/fitness/strategies.py` and register in `GA/fitness/registry.py`.
+
+## Team Contributions
+
+The project was a collaborative effort. Below is a summary of the specific contributions and ownership for major components:
+
+- Data Loading & Preprocessing: robust file handling (CSV/Excel/TXT), normalization, `preprocess_data`. [Xiaoyang\ Xiao\]
+- Genetic Algorithm Core: `GeneticSelector`, vectorized ops, adaptive mutation, early stopping, local refinement in GA/GA.py and GA/operators.py. [Xinyue\ Wang\]
+- Fitness Strategies & Scoring: registry and strategies in GA/fitness including manual $R^2$, MAE/MSE, ROC-AUC; fixed CV split and parameter hooks. [Shizhe\ Zhang\]
+- CLI & Scripts: scripts/run_ga.py with strategy auto-resolution and hyphen flags; benchmarking/data scripts. [Shizhe\ Zhang\]
+- Testing: unit/integration tests in GA/tests verifying numerical parity; [Xiaoyang\ Xiao\]
+- Docs: README and Quarto docs maintenance.[Xinyue\ Wang\]
+
+
+## AI Assistance
+
+We used AI assistance selectively to accelerate brainstorming and small, well-bounded coding tasks (e.g., naming alternatives, suggesting edge cases, and drafting short helper snippets or documentation phrasing). Architectural decisions—including public APIs, function/class boundaries, and argument design—were made by us. Any AI-suggested code was treated as a starting point only: we read it critically, verified logic and complexity, adapted it to our conventions, and wrote or extended tests to confirm behavior and numerical correctness. In short, AI supported ideation and minor implementation details, while design ownership, code comprehension, and validation remained firmly our responsibility.
+

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools >= 70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GA"
+authors = [
+  { name = "Shizhe Zhang", email = "shizhe_zhang@berkeley.edu" },
+  { name = "Xiaoyang Xiao", email = "xiaoyang_xiao@berkeley.edu" },
+  { name = "Xinyue Wang", email = "wangxy2025@berkeley.edu" },
+]
+description = "A Python library to variable selection using genetic algorithms"
+readme = "README.md"
+
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=1.5",
+  "scipy>=1.8",
+  "scikit-learn>=1.2",
+  "joblib>=1.2",
+  "openpyxl>=3.0",
+]
+
+license = "BSD-3-Clause"
+license-files = ["LICEN[CS]E*"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+
+dynamic = ["version"]
+
+
+[tool.setuptools]
+packages = ["GA"]
+
+[tool.setuptools.dynamic]
+version = {attr = "GA.__version__"}
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0"
+]
