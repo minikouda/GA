@@ -361,7 +361,7 @@ def select(
     adaptive_mutation = kwargs.pop('adaptive_mutation', False)
     low_mutation_rate = kwargs.pop('low_mutation_rate', None)
     high_mutation_rate = kwargs.pop('high_mutation_rate', None)
-    vectorized_ops = kwargs.pop('vectorized_ops', False)
+    vectorized_ops = kwargs.pop('vectorized_ops', True)
     patience = kwargs.pop('patience', 10)
     k_points = kwargs.pop('k_points', 2)
     n_workers = kwargs.pop('n_workers', 1)

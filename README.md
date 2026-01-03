@@ -58,8 +58,8 @@ and interpretability by identifying the most relevant predictors.
 ### Install from Source
 
 ``` bash
-git clone https://github.com/Bibi-Wangg/GA-dev.git
-cd GA-dev
+git clone https://github.com/minikouda/GA.git
+cd GA
 pip install --user .
 ```
 
