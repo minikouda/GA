@@ -469,17 +469,3 @@ specific contributions and ownership for major components:
 -   Testing: unit/integration tests in GA/tests verifying numerical
     parity; \[Xiaoyang Xiao\]
 -   Docs: README and Quarto docs maintenance.\[Xinyue Wang\]
-
-## AI Assistance
-
-We used AI assistance selectively to accelerate brainstorming and small,
-well-bounded coding tasks (e.g., naming alternatives, suggesting edge
-cases, and drafting short helper snippets or documentation phrasing).
-Architectural decisions—including public APIs, function/class
-boundaries, and argument design—were made by us. Any AI-suggested code
-was treated as a starting point only: we read it critically, verified
-logic and complexity, adapted it to our conventions, and wrote or
-extended tests to confirm behavior and numerical correctness. In short,
-AI supported ideation and minor implementation details, while design
-ownership, code comprehension, and validation remained firmly our
-responsibility.
