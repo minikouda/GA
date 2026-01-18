@@ -315,7 +315,7 @@ Common arguments:
 <tr>
 <td><code>--vectorized</code></td>
 <td>flag</td>
-<td>false</td>
+<td>true</td>
 <td>Enable vectorized selection operator.</td>
 </tr>
 <tr>
