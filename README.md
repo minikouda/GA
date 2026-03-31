@@ -24,6 +24,22 @@ features in regression and classification tasks using Genetic Algorithms
 This project automates feature selection, improving model performance
 and interpretability by identifying the most relevant predictors.
 
+## Demo
+
+![GA Evolution Animation](ga_animation.gif)
+
+The animation shows the GA evolving over 15 generations on a synthetic regression dataset (200 samples, 20 features, 6 true signal features):
+
+- **Left** — Population chromosomes: each row is an individual, each column a feature. Red = selected, yellow = not selected. Green bands mark the true informative features.
+- **Center** — Best fitness (penalized R²) accumulated over generations (blue) and per-generation best (red dashed).
+- **Right** — Feature selection frequency across the population. Green bars are true signal features; watch them rise as the GA learns.
+
+To regenerate:
+
+``` bash
+python3 scripts/visualize_ga.py --output ga_animation.gif
+```
+
 ## How It Works
 
 -   Core Algorithm: Evolves binary feature masks via tournament
